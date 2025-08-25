@@ -1,0 +1,126 @@
+service: genai-support-backend
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  environment:
+    BEDROCK_MODEL_ID: anthropic.claude-3-sonnet-20240229-v1:0
+    AGENTS_TABLE: ${self:service}-agents-${opt:stage, self:provider.stage}
+    CONVERSATIONS_TABLE: ${self:service}-conversations-${opt:stage, self:provider.stage}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - bedrock:InvokeModel
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "*"
+
+functions:
+  # Agents API
+  getAgents:
+    handler: handlers/agents.getAgents
+    events:
+      - http:
+          path: /agents
+          method: get
+          cors: true
+  
+  updateAgent:
+    handler: handlers/agents.updateAgent
+    events:
+      - http:
+          path: /agents/{id}
+          method: put
+          cors: true
+
+  # Conversations API
+  getConversations:
+    handler: handlers/conversations.getConversations
+    events:
+      - http:
+          path: /conversations
+          method: get
+          cors: true
+  
+  createConversation:
+    handler: handlers/conversations.createConversation
+    events:
+      - http:
+          path: /conversations
+          method: post
+          cors: true
+
+  # Coaching Insights API
+  getCoachingInsights:
+    handler: handlers/coaching.getInsights
+    events:
+      - http:
+          path: /coaching
+          method: get
+          cors: true
+  
+  generateInsights:
+    handler: handlers/coaching.generateInsights
+    events:
+      - http:
+          path: /coaching/generate
+          method: post
+          cors: true
+
+  # Metrics API
+  getMetrics:
+    handler: handlers/metrics.getMetrics
+    events:
+      - http:
+          path: /metrics
+          method: get
+          cors: true
+
+  # WebSocket for real-time updates
+  websocketConnect:
+    handler: handlers/websocket.connectHandler
+    events:
+      - websocket: $connect
+  
+  websocketDisconnect:
+    handler: handlers/websocket.disconnectHandler
+    events:
+      - websocket: $disconnect
+
+resources:
+  Resources:
+    AgentsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.AGENTS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: agentId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: agentId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+    ConversationsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.CONVERSATIONS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: conversationId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: conversationId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+plugins:
+  - serverless-offline
+
+custom:
+  serverless-offline:
+    httpPort: 3001

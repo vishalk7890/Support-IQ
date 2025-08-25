@@ -1,0 +1,31 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - yarn install
+    build:
+      commands:
+        - yarn run build
+  artifacts:
+    baseDirectory: dist
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - node_modules/**/*
+environment:
+  variables:
+    # AWS Region for services
+    AWS_REGION: ap-southeast-1
+    # API Gateway endpoints (will be created during backend setup)
+    VITE_API_BASE_URL: https://your-api-gateway-url.execute-api.us-east-1.amazonaws.com/prod
+    VITE_AGENTS_ENDPOINT: /agents
+    VITE_CONVERSATIONS_ENDPOINT: /conversations
+    VITE_COACHING_ENDPOINT: /coaching
+    VITE_METRICS_ENDPOINT: /metrics
+    # Amazon Bedrock configuration
+    BEDROCK_MODEL_ID: anthropic.claude-3-sonnet-20240229-v1:0
+    BEDROCK_REGION: ap-southeast-1
+    # QuickSight dashboard (optional)
+    QUICKSIGHT_DASHBOARD_URL: https://quicksight.aws.amazon.com/sn/dashboards/your-dashboard-id

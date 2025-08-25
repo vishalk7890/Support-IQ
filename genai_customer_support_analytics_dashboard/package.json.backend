@@ -1,0 +1,23 @@
+{
+  "name": "genai-support-backend",
+  "version": "1.0.0",
+  "description": "AWS Lambda backend for GenAI Customer Support Analytics",
+  "main": "index.js",
+  "scripts": {
+    "deploy": "serverless deploy",
+    "deploy:dev": "serverless deploy --stage dev",
+    "deploy:prod": "serverless deploy --stage prod",
+    "offline": "serverless offline",
+    "remove": "serverless remove"
+  },
+  "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.470.0",
+    "@aws-sdk/client-dynamodb": "^3.470.0",
+    "@aws-sdk/lib-dynamodb": "^3.470.0",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "serverless": "^3.38.0",
+    "serverless-offline": "^13.3.0"
+  }
+}
