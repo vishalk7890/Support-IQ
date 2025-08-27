@@ -179,6 +179,7 @@ const generateCoachingInsights = (count: number): CoachingInsight[] => {
   }));
 };
 
+
 export const useAnalyticsData = () => {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);

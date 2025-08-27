@@ -10,9 +10,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@aws-amplify/auth": "^6.15.0",
+    "@aws-crypto/sha256-js": "^5.2.0",
+    "@aws-sdk/client-cognito-identity": "^3.876.0",
+    "@aws-sdk/credential-providers": "^3.876.0",
+    "@smithy/signature-v4": "^4.2.0",
+    "@aws-sdk/util-format-url": "^3.873.0",
     "@faker-js/faker": "^9.9.0",
+    "aws-amplify": "^6.15.5",
     "axios": "^1.9.0",
-    "echarts": "^6.0.0",
+    "echarts": "^5.6.0",
     "echarts-for-react": "^3.0.2",
     "framer-motion": "^12.23.12",
     "lucide-react": "^0.511.0",
