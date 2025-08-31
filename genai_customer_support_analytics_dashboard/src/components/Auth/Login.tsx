@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { signInWithRedirect } from '@aws-amplify/auth';
+import '../../aws-config';
 
 const Login: React.FC = () => {
-  const { login, user } = useAuth();
+  const { login, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -15,18 +15,16 @@ const Login: React.FC = () => {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
     if (!email || !password) {
       setError('Please enter email and password.');
       return;
     }
+
     setLoading(true);
     try {
-      // If Hosted UI config is provided via window.pcaSettings, prefer Hosted UI
-      if (window.pcaSettings?.auth?.uri && window.pcaSettings?.auth?.clientId) {
-        await signInWithRedirect();
-        return;
-      }
       const result = await login({ email, password });
+      
       if (result.status === 'SIGNED_IN') {
         navigate('/dashboard', { replace: true });
       } else if (result.status === 'NEEDS_CONFIRMATION') {
@@ -34,33 +32,56 @@ const Login: React.FC = () => {
       } else if (result.status === 'RESET_REQUIRED') {
         setError('Password reset required. Please reset your password.');
       } else if (result.status === 'MFA_REQUIRED') {
-        setError('Your user pool requires MFA. Disable MFA in Cognito to sign in without it.');
+        setError('MFA required. Please complete MFA to sign in.');
       } else {
         setError('Sign-in incomplete. Please try again.');
       }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to sign in';
-      setError(message.includes('NotAuthorizedException') ? 'Incorrect username or password' : message);
+    } catch (err: any) {
+      console.error('Login error:', err);
+      
+      // Handle Amplify Auth errors
+      if (err.name === 'UserNotConfirmedException' || err.code === 'UserNotConfirmedException') {
+        setError('Please confirm your email before signing in.');
+      } else if (err.name === 'NotAuthorizedException' || err.code === 'NotAuthorizedException') {
+        setError('Incorrect username or password.');
+      } else if (err.name === 'UserNotFoundException' || err.code === 'UserNotFoundException') {
+        setError('User does not exist.');
+      } else if (err.name === 'PasswordResetRequiredException' || err.code === 'PasswordResetRequiredException') {
+        setError('Password reset required. Please reset your password.');
+      } else {
+        setError(err.message || err.name || 'Failed to sign in.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
+  // Redirect if already signed in
   useEffect(() => {
-    if (user) {
+    if (user && !authLoading) {
       navigate('/dashboard', { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, authLoading, navigate]);
+
+  // Show loading while auth context is initializing
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
+        <div className="text-white text-center">
+          <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
-      {/* Animated Background */}
+      {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
         <div className="absolute inset-0 opacity-20" style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
         }}></div>
-        
-        {/* Floating Elements */}
         <div className="absolute top-20 left-20 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute bottom-20 right-20 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-pink-500/10 rounded-full blur-3xl animate-pulse delay-500"></div>
@@ -72,7 +93,7 @@ const Login: React.FC = () => {
         transition={{ duration: 0.8 }}
         className="relative z-10 w-full max-w-md p-4"
       >
-        {/* Brand Header */}
+        {/* Header */}
         <div className="text-center mb-8">
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
@@ -94,11 +115,6 @@ const Login: React.FC = () => {
           transition={{ duration: 0.6, delay: 0.4 }}
           className="backdrop-blur-xl bg-white/10 shadow-2xl rounded-3xl p-8 border border-white/20"
         >
-          <div className="mb-6 text-center">
-            <h2 className="text-2xl font-semibold text-white mb-2">Welcome Back</h2>
-            <p className="text-gray-300 text-sm">Sign in to access your analytics dashboard</p>
-          </div>
-
           {error && (
             <div className="mb-4 rounded-lg border border-red-300/50 bg-red-500/20 text-red-200 px-3 py-2 text-sm backdrop-blur-sm">
               {error}
@@ -158,5 +174,3 @@ const Login: React.FC = () => {
 };
 
 export default Login;
-
-

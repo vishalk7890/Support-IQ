@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Comprehensive Auth Test</title>
+</head>
+<body>
+    <h1>Comprehensive Authentication Test</h1>
+    
+    <div>
+        <label>Paste your ID token here:</label><br>
+        <textarea id="idToken" rows="6" cols="80" placeholder="Paste your ID JWT token here..."></textarea><br><br>
+        
+        <label>Paste your Access token here (if you have it):</label><br>
+        <textarea id="accessToken" rows="6" cols="80" placeholder="Paste your Access JWT token here..."></textarea><br><br>
+        
+        <button onclick="testAllMethods()">Test All Authentication Methods</button>
+    </div>
+    
+    <div id="results" style="margin-top: 20px;"></div>
+    
+    <script>
+        async function testToken(token, tokenType, method = 'Bearer') {
+            const apiUrl = 'https://6wg7m9tsxg.execute-api.us-east-1.amazonaws.com/Prod/list';
+            
+            let headers = {
+                'Content-Type': 'application/json'
+            };
+            
+            if (method === 'Bearer') {
+                headers['Authorization'] = `Bearer ${token}`;
+            } else if (method === 'Token') {
+                headers['Authorization'] = `Token ${token}`;
+            } else if (method === 'JWT') {
+                headers['Authorization'] = `JWT ${token}`;
+            } else if (method === 'HeaderOnly') {
+                headers['Authorization'] = token;
+            }
+            
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'GET',
+                    headers: headers
+                });
+                
+                const responseText = await response.text();
+                
+                return {
+                    success: response.ok,
+                    status: response.status,
+                    statusText: response.statusText,
+                    response: responseText,
+                    headers: Object.fromEntries(response.headers.entries())
+                };
+            } catch (error) {
+                return {
+                    success: false,
+                    error: error.message
+                };
+            }
+        }
+        
+        function analyzeToken(token) {
+            try {
+                const parts = token.split('.');
+                if (parts.length === 3) {
+                    const payload = JSON.parse(atob(parts[1]));
+                    const header = JSON.parse(atob(parts[0]));
+                    return {
+                        header,
+                        payload,
+                        valid: true
+                    };
+                }
+            } catch (e) {
+                return { valid: false, error: e.message };
+            }
+            return { valid: false };
+        }
+        
+        async function testAllMethods() {
+            const idToken = document.getElementById('idToken').value.trim();
+            const accessToken = document.getElementById('accessToken').value.trim();
+            const resultsDiv = document.getElementById('results');
+            
+            if (!idToken && !accessToken) {
+                resultsDiv.innerHTML = '<div style="color: red;">Please provide at least one token!</div>';
+                return;
+            }
+            
+            resultsDiv.innerHTML = '<div>Running comprehensive authentication tests...</div>';
+            
+            let html = '<h2>Test Results</h2>';
+            
+            const tokens = [];
+            if (idToken) tokens.push({ token: idToken, type: 'ID Token' });
+            if (accessToken) tokens.push({ token: accessToken, type: 'Access Token' });
+            
+            const methods = ['Bearer', 'Token', 'JWT', 'HeaderOnly'];
+            
+            for (const { token, type } of tokens) {
+                html += `<h3>${type} Analysis:</h3>`;
+                
+                const analysis = analyzeToken(token);
+                if (analysis.valid) {
+                    html += `
+                        <div style="background: #f0f8ff; padding: 10px; margin: 10px 0; border-radius: 5px;">
+                            <p><strong>Algorithm:</strong> ${analysis.header.alg}</p>
+                            <p><strong>Type:</strong> ${analysis.header.typ}</p>
+                            <p><strong>Audience:</strong> ${analysis.payload.aud}</p>
+                            <p><strong>Issuer:</strong> ${analysis.payload.iss}</p>
+                            <p><strong>Token Use:</strong> ${analysis.payload.token_use}</p>
+                            <p><strong>Client ID:</strong> ${analysis.payload.client_id || 'undefined'}</p>
+                            <p><strong>Username:</strong> ${analysis.payload.username || analysis.payload['cognito:username']}</p>
+                        </div>
+                    `;
+                } else {
+                    html += `<div style="color: red;">Invalid token format: ${analysis.error || 'Unknown error'}</div>`;
+                    continue;
+                }
+                
+                html += `<h4>Testing ${type} with different methods:</h4>`;
+                
+                for (const method of methods) {
+                    const result = await testToken(token, type, method);
+                    
+                    const statusColor = result.success ? 'green' : 'red';
+                    const icon = result.success ? '✅' : '❌';
+                    
+                    html += `
+                        <div style="margin: 10px 0; padding: 10px; border-left: 4px solid ${statusColor}; background: ${result.success ? '#f0f8f0' : '#fff0f0'};">
+                            <h5>${icon} Method: Authorization: ${method} {token}</h5>
+                            <p><strong>Status:</strong> ${result.status || 'ERROR'} ${result.statusText || ''}</p>
+                            <p><strong>Response:</strong></p>
+                            <pre style="background: #f5f5f5; padding: 10px; border-radius: 3px;">${result.response || result.error || 'No response'}</pre>
+                        </div>
+                    `;
+                }
+                
+                html += '<hr>';
+            }
+            
+            // Test with no Authorization header
+            html += '<h3>Testing with NO Authorization (should fail):</h3>';
+            const noAuthResult = await fetch('https://6wg7m9tsxg.execute-api.us-east-1.amazonaws.com/Prod/list', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            }).then(r => r.text()).catch(e => e.message);
+            
+            html += `<div style="background: #fff0f0; padding: 10px; border-radius: 5px;">
+                <p><strong>No Auth Response:</strong></p>
+                <pre>${noAuthResult}</pre>
+            </div>`;
+            
+            resultsDiv.innerHTML = html;
+        }
+    </script>
+</body>
+</html>

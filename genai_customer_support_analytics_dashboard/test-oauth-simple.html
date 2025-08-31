@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OAuth Test</title>
+</head>
+<body>
+    <h1>OAuth Flow Test</h1>
+    <p>Click the button below to test the OAuth flow:</p>
+    
+    <button onclick="startOAuth()">Start OAuth Flow</button>
+    
+    <div id="result"></div>
+    
+    <script>
+        function startOAuth() {
+            const authUrl = 'https://pca-1755221929659628847.auth.us-east-1.amazoncognito.com/oauth2/authorize?' +
+                'client_id=7qqdba5o1co51g0at68hu16d8p&' +
+                'response_type=code&' +
+                'scope=openid%20email%20profile%20phone&' +
+                'redirect_uri=' + encodeURIComponent('http://localhost:5173/oauth/callback');
+            
+            console.log('OAuth URL:', authUrl);
+            window.location.href = authUrl;
+        }
+        
+        // Check if we're on the callback page
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const error = urlParams.get('error');
+        
+        if (code) {
+            document.getElementById('result').innerHTML = `
+                <h2>✅ OAuth Success!</h2>
+                <p>Authorization code: ${code.substring(0, 20)}...</p>
+                <p>This code can be exchanged for tokens with proper scopes.</p>
+            `;
+        } else if (error) {
+            document.getElementById('result').innerHTML = `
+                <h2>❌ OAuth Error</h2>
+                <p>Error: ${error}</p>
+                <p>Description: ${urlParams.get('error_description') || 'No description'}</p>
+            `;
+        }
+    </script>
+</body>
+</html>

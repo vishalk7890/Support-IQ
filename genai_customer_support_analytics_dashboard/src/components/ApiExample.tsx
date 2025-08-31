@@ -20,8 +20,8 @@ export const ApiExample: React.FC = () => {
     setApiResponse(null);
 
     try {
-      // Test with your actual API Gateway endpoint
-      const response = await makeRequest('https://6wg7m9tsxg.execute-api.us-east-1.amazonaws.com/Prod/analytics', {
+      // Test with actual PCA endpoint
+      const response = await makeRequest('https://6wg7m9tsxg.execute-api.us-east-1.amazonaws.com/Prod/list', {
         method: 'GET',
       });
       
@@ -44,8 +44,8 @@ export const ApiExample: React.FC = () => {
     setApiResponse(null);
 
     try {
-      // Test with transcription jobs endpoint
-      const response = await makeRequest('https://6wg7m9tsxg.execute-api.us-east-1.amazonaws.com/Prod/jobs', {
+      // Test with PCA entities endpoint
+      const response = await makeRequest('https://6wg7m9tsxg.execute-api.us-east-1.amazonaws.com/Prod/entities', {
         method: 'GET',
       });
       
@@ -89,7 +89,7 @@ export const ApiExample: React.FC = () => {
           disabled={!isReady || isLoading}
           className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white px-4 py-2 rounded mr-4"
         >
-          {isLoading ? 'Loading...' : 'Make GET Request'}
+          {isLoading ? 'Loading...' : 'Test /list Endpoint'}
         </button>
         
         <button
@@ -97,7 +97,7 @@ export const ApiExample: React.FC = () => {
           disabled={!isReady || isLoading}
           className="bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white px-4 py-2 rounded"
         >
-          {isLoading ? 'Loading...' : 'Make POST Request'}
+          {isLoading ? 'Loading...' : 'Test /entities Endpoint'}
         </button>
       </div>
 

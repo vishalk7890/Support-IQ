@@ -11,7 +11,9 @@ import TranscriptList from '../Transcripts/TranscriptList';
 import CoachingInsights from '../Coaching/CoachingInsights';
 import ResponsibleAI from '../Compliance/ResponsibleAI';
 import UsersPage from '../Users/UsersPage';
+import ListViewer from '../List/ListViewer';
 import { ApiExample } from '../ApiExample';
+import TokenDebugger from '../Auth/TokenDebugger';
 
 const Dashboard: React.FC = () => {
   const [activeTab, setActiveTab] = React.useState('dashboard');
@@ -41,6 +43,8 @@ const Dashboard: React.FC = () => {
         return <ConversationList conversations={conversations} />;
       case 'transcripts':
         return <TranscriptList transcripts={transcripts} />;
+      case 'list':
+        return <ListViewer />;
       case 'coaching':
         return <CoachingInsights insights={coachingInsights} />;
       case 'compliance':
@@ -56,6 +60,8 @@ const Dashboard: React.FC = () => {
         return <UsersPage />;
       case 'api-test':
         return <ApiExample />;
+      case 'token-debug':
+        return <TokenDebugger />;
       default:
         return (
           <div className="space-y-6">

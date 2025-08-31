@@ -13,11 +13,12 @@ function createClient(): AxiosInstance {
   instance.interceptors.request.use(async (config) => {
     try {
       const session = await fetchAuthSession();
+      // Use access token without "Bearer" prefix like the working CloudFront app
       const accessToken = session?.tokens?.accessToken?.toString();
       if (accessToken) {
         config.headers = {
           ...config.headers,
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: accessToken, // No "Bearer" prefix!
         };
       }
     } catch {

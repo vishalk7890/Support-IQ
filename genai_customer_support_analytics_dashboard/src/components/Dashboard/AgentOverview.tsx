@@ -96,31 +96,16 @@
 
 
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Agent } from '../../types';
 import { Clock, MessageSquare, TrendingUp, AlertTriangle, Star } from 'lucide-react';
 
-const AgentOverview: React.FC = () => {
-  const [agents, setAgents] = useState<Agent[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [metrics, setMetrics] = useState({
-    activeAgents: 0,
-    // ...other metrics
-  });
+// This component now receives agents as props from parent (Dashboard component)
+interface AgentOverviewProps {
+  agents: Agent[];
+}
 
-  useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_BASE_URL}/agents`)
-      .then(res => res.json())
-      .then(data => {
-        setAgents(data);
-        setMetrics(prevMetrics => ({
-          ...prevMetrics,
-          activeAgents: data.filter(agent => agent.status === 'active').length,
-        }));
-      })
-      .catch(err => console.error(err))
-      .finally(() => setLoading(false));
-  }, []);
+const AgentOverview: React.FC<AgentOverviewProps> = ({ agents }) => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -152,13 +137,11 @@ const AgentOverview: React.FC = () => {
     .sort((a, b) => b.performanceScore - a.performanceScore)
     .slice(0, 6);
 
-  if (loading) return <div>Loading agents...</div>;
-
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-gray-900">Top Performing Agents</h3>
-        <span className="text-sm text-gray-500">{metrics.activeAgents} active</span>
+        <span className="text-sm text-gray-500">{agents.filter(a => a.status === 'active').length} active</span>
       </div>
       
       <div className="space-y-4">

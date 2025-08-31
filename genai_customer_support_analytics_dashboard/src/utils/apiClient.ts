@@ -1,77 +1,68 @@
-import { SignatureV4 } from '@smithy/signature-v4';
-import { Sha256 } from '@aws-crypto/sha256-js';
-import { formatUrl } from '@aws-sdk/util-format-url';
-
-export interface AWSCredentials {
-  accessKeyId: string;
-  secretAccessKey: string;
-  sessionToken: string;
-  expiration?: Date;
-}
+import { fetchAuthSession } from '@aws-amplify/auth';
 
 export interface ApiRequestOptions {
   method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   url: string;
   body?: any;
   headers?: Record<string, string>;
-  region?: string;
-  service?: string;
 }
 
-export class ApiClient {
-  private credentials: AWSCredentials;
-  private region: string;
-  private service: string;
+export class JwtApiClient {
+  private baseUrl: string;
+  private apiKey?: string;
+  private getOAuthToken?: () => Promise<string | null>;
 
-  constructor(credentials: AWSCredentials, region = 'us-east-1', service = 'execute-api') {
-    this.credentials = credentials;
-    this.region = region;
-    this.service = service;
+  constructor(baseUrl: string, apiKey?: string, getOAuthToken?: () => Promise<string | null>) {
+    this.baseUrl = baseUrl;
+    this.apiKey = apiKey;
+    this.getOAuthToken = getOAuthToken;
   }
 
   /**
-   * Makes a signed API request using AWS SigV4
+   * Makes an authenticated API request using JWT Bearer token
    */
   async request<T = any>(options: ApiRequestOptions): Promise<T> {
-    const { method, url, body, headers = {}, region = this.region, service = this.service } = options;
+    const { method, url, body, headers = {} } = options;
 
-    // Parse the URL
-    const urlObj = new URL(url);
+    // Get JWT token from current auth session
+    const authHeaders: Record<string, string> = {};
     
-    // Prepare the request
-    const request = {
+    try {
+      // Simple approach: Always use ID token for Cognito User Pool Authorizer
+      let tokenToUse: string | null = null;
+      
+      if (this.getOAuthToken) {
+        tokenToUse = await this.getOAuthToken();
+      }
+      
+      if (tokenToUse) {
+        authHeaders.Authorization = tokenToUse;
+        console.log('🚀 Using ID token for authorization');
+      } else {
+        console.log('❌ No token available for authorization');
+      }
+    } catch (error) {
+      console.warn('Failed to get auth session:', error);
+    }
+
+    // Add API key if available
+    if (this.apiKey) {
+      authHeaders['x-api-key'] = this.apiKey;
+    }
+
+    const requestUrl = url.startsWith('http') ? url : `${this.baseUrl}${url}`;
+    
+    const requestOptions: RequestInit = {
       method,
-      protocol: urlObj.protocol,
-      hostname: urlObj.hostname,
-      port: urlObj.port ? parseInt(urlObj.port) : undefined,
-      path: urlObj.pathname + urlObj.search,
       headers: {
         'Content-Type': 'application/json',
+        ...authHeaders,
         ...headers,
       },
       body: body ? JSON.stringify(body) : undefined,
     };
 
-    // Create the signer
-    const signer = new SignatureV4({
-      credentials: this.credentials,
-      region,
-      service,
-      sha256: Sha256,
-    });
-
-    // Sign the request
-    const signedRequest = await signer.sign(request);
-
-    // Convert signed request to fetch options
-    const fetchOptions: RequestInit = {
-      method: signedRequest.method,
-      headers: signedRequest.headers,
-      body: signedRequest.body,
-    };
-
-    // Make the request
-    const response = await fetch(formatUrl(signedRequest), fetchOptions);
+    const response = await fetch(requestUrl, requestOptions);
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -121,28 +112,11 @@ export class ApiClient {
   async patch<T = any>(url: string, body?: any, headers?: Record<string, string>): Promise<T> {
     return this.request<T>({ method: 'PATCH', url, body, headers });
   }
-
-  /**
-   * Update credentials (useful when they expire)
-   */
-  updateCredentials(credentials: AWSCredentials): void {
-    this.credentials = credentials;
-  }
-
-  /**
-   * Check if credentials are expired
-   */
-  areCredentialsExpired(): boolean {
-    if (!this.credentials.expiration) {
-      return false;
-    }
-    return new Date() >= this.credentials.expiration;
-  }
 }
 
 /**
- * Factory function to create an API client with credentials
+ * Factory function to create a JWT-based API client
  */
-export const createApiClient = (credentials: AWSCredentials, region?: string, service?: string): ApiClient => {
-  return new ApiClient(credentials, region, service);
+export const createJwtApiClient = (baseUrl: string, apiKey?: string, getOAuthToken?: () => Promise<string | null>): JwtApiClient => {
+  return new JwtApiClient(baseUrl, apiKey, getOAuthToken);
 };

@@ -9,8 +9,9 @@ import {
   Shield,
   Bot,
   FileText,
-  Mic,
-  Zap
+  Zap,
+  List,
+  Key
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -23,11 +24,13 @@ const menuItems = [
   { id: 'agents', label: 'Agents', icon: Users },
   { id: 'conversations', label: 'Conversations', icon: MessageSquare },
   { id: 'transcripts', label: 'Transcripts', icon: FileText },
+  { id: 'list', label: 'List Data', icon: List },
   { id: 'coaching', label: 'AI Coaching', icon: Brain },
   { id: 'analytics', label: 'Analytics', icon: TrendingUp },
   { id: 'users', label: 'Users', icon: Users },
   { id: 'compliance', label: 'Responsible AI', icon: Shield },
   { id: 'api-test', label: 'API Test', icon: Zap },
+  { id: 'token-debug', label: 'Token Debug', icon: Key },
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
