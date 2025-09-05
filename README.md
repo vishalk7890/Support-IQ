@@ -280,22 +280,7 @@ const mockLogin = () => {
 };
 ```
 
-#### **Option 3: Firebase Authentication**
 
-**Replace AWS with Firebase:**
-```bash
-npm install firebase
-```
-
-```typescript
-// Firebase Auth implementation
-import { signInWithEmailAndPassword } from 'firebase/auth';
-
-const login = async (email: string, password: string) => {
-  const userCredential = await signInWithEmailAndPassword(auth, email, password);
-  return userCredential.user;
-};
-```
 
 ### 🚫 **Current Blockers Summary**
 
@@ -306,22 +291,7 @@ const login = async (email: string, password: string) => {
 | **File Upload** | S3 Integration | Cannot upload call recordings |
 | **Real-time Data** | WebSocket + Lambda | No live monitoring |
 
-### ✅ **Recommended Migration Path**
 
-1. **Phase 1: Mock Authentication**
-   - Replace AWS auth with simple mock login
-   - Use static demo data for all features
-   - Fully functional UI without AWS dependencies
-
-2. **Phase 2: Custom Backend**
-   - Implement Node.js/Express backend
-   - Add JWT authentication
-   - Create REST APIs for analytics data
-
-3. **Phase 3: Real Integrations**
-   - Add speech-to-text processing
-   - Implement real call recording uploads
-   - Connect to live monitoring systems
 
 ### 🛡️ **Security Considerations**
 
@@ -437,17 +407,3 @@ DEBUG=true npm start
 4. Push to branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-For support and questions:
-- 📧 Email: support@supportiq.com
-- 📖 Documentation: [docs.supportiq.com](https://docs.supportiq.com)
-- 💬 Community: [Discord](https://discord.gg/supportiq)
-
----
-
-**Built with ❤️ for better customer support experiences**
