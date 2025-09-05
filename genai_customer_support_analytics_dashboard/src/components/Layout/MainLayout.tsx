@@ -23,8 +23,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     if (pathname === '/agents') return 'agents';
     if (pathname === '/compliance') return 'compliance';
     if (pathname === '/users') return 'users';
-    if (pathname === '/api-test') return 'api-test';
-    if (pathname === '/token-debug') return 'token-debug';
     return 'dashboard';
   };
 
@@ -40,9 +38,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       'analysis-coaching': '/analysis-coaching',
       agents: '/agents',
       compliance: '/compliance',
-      users: '/users',
-      'api-test': '/api-test',
-      'token-debug': '/token-debug'
+      users: '/users'
     };
     
     const route = routeMap[tab] || '/dashboard';

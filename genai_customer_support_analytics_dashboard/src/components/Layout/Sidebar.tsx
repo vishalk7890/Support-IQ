@@ -8,12 +8,9 @@ import {
   Settings,
   Shield,
   Bot,
-  FileText,
-  Zap,
   Phone,
   Activity,
   Headphones,
-  Key,
   ArrowRight
 } from 'lucide-react';
 
@@ -49,8 +46,6 @@ const workflowSections = [
     items: [
       { id: 'users', label: 'Users', icon: Users, color: 'text-gray-400' },
       { id: 'compliance', label: 'Responsible AI', icon: Shield, color: 'text-gray-400' },
-      { id: 'api-test', label: 'API Test', icon: Zap, color: 'text-gray-400' },
-      { id: 'token-debug', label: 'Token Debug', icon: Key, color: 'text-gray-400' },
     ]
   }
 ];

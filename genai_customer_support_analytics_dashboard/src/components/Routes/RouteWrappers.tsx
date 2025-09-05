@@ -21,9 +21,7 @@ export const ListViewerWrapper: React.FC = () => {
       'analysis-coaching': '/analysis-coaching',
       agents: '/agents',
       compliance: '/compliance',
-      users: '/users',
-      'api-test': '/api-test',
-      'token-debug': '/token-debug'
+      users: '/users'
     };
     
     const route = routeMap[tab] || '/dashboard';
@@ -48,9 +46,7 @@ export const ConversationListWrapper: React.FC<{ conversations: any[] }> = ({ co
       'analysis-coaching': '/analysis-coaching',
       agents: '/agents',
       compliance: '/compliance',
-      users: '/users',
-      'api-test': '/api-test',
-      'token-debug': '/token-debug'
+      users: '/users'
     };
     
     const route = routeMap[tab] || '/dashboard';
@@ -75,9 +71,7 @@ export const TranscriptListWrapper: React.FC<{ transcripts: any[] }> = ({ transc
       'analysis-coaching': '/analysis-coaching',
       agents: '/agents',
       compliance: '/compliance',
-      users: '/users',
-      'api-test': '/api-test',
-      'token-debug': '/token-debug'
+      users: '/users'
     };
     
     const route = routeMap[tab] || '/dashboard';
@@ -102,9 +96,7 @@ export const AnalysisCoachingPageWrapper: React.FC = () => {
       'analysis-coaching': '/analysis-coaching',
       agents: '/agents',
       compliance: '/compliance',
-      users: '/users',
-      'api-test': '/api-test',
-      'token-debug': '/token-debug'
+      users: '/users'
     };
     
     const route = routeMap[tab] || '/dashboard';
@@ -129,9 +121,7 @@ export const EnhancedCoachingDashboardWrapper: React.FC = () => {
       'analysis-coaching': '/analysis-coaching',
       agents: '/agents',
       compliance: '/compliance',
-      users: '/users',
-      'api-test': '/api-test',
-      'token-debug': '/token-debug'
+      users: '/users'
     };
     
     const route = routeMap[tab] || '/dashboard';

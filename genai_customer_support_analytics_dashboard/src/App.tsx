@@ -7,8 +7,6 @@ import AnalyticsPage from './components/Analytics/AnalyticsPage';
 import AgentOverview from './components/Dashboard/AgentOverview';
 import ResponsibleAI from './components/Compliance/ResponsibleAI';
 import UsersPage from './components/Users/UsersPage';
-import { ApiExample } from './components/ApiExample';
-import TokenDebugger from './components/Auth/TokenDebugger';
 import {
   ListViewerWrapper,
   ConversationListWrapper,
@@ -59,8 +57,6 @@ function App() {
                 <Route path="/agents" element={<AgentOverview agents={agents} />} />
                 <Route path="/compliance" element={<ResponsibleAI />} />
                 <Route path="/users" element={<UsersPage />} />
-                <Route path="/api-test" element={<ApiExample />} />
-                <Route path="/token-debug" element={<TokenDebugger />} />
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
               </Routes>
             </MainLayout>
