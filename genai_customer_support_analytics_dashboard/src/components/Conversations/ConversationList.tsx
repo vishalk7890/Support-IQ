@@ -1,12 +1,13 @@
 import React from 'react';
 import { Conversation } from '../../types';
-import { MessageSquare, Phone, Mail, Clock, TrendingUp, TrendingDown, AlertTriangle } from 'lucide-react';
+import { MessageSquare, Phone, Mail, Clock, TrendingUp, TrendingDown, AlertTriangle, Activity, ArrowRight, Headphones } from 'lucide-react';
 
 interface ConversationListProps {
   conversations: Conversation[];
+  onNavigate?: (tab: string) => void;
 }
 
-const ConversationList: React.FC<ConversationListProps> = ({ conversations }) => {
+const ConversationList: React.FC<ConversationListProps> = ({ conversations, onNavigate }) => {
   const getChannelIcon = (channel: string) => {
     switch (channel) {
       case 'chat': return MessageSquare;
@@ -50,11 +51,78 @@ const ConversationList: React.FC<ConversationListProps> = ({ conversations }) =>
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-      <div className="p-6 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900">Active Conversations</h3>
-        <p className="text-sm text-gray-500">Real-time conversation monitoring and analysis</p>
+    <div className="space-y-6">
+      {/* Breadcrumb Header */}
+      <div className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl shadow-lg text-white p-6">
+        {/* Workflow Progress Bar */}
+        <div className="mb-6">
+          <div className="flex items-center justify-center gap-4 mb-3">
+            <div className="flex items-center gap-2 text-white/60 text-sm">
+              <Phone className="w-4 h-4" />
+              <span>Call Recordings</span>
+            </div>
+            <ArrowRight className="w-4 h-4 text-white/60" />
+            <div className="flex items-center gap-2 bg-white/20 rounded-full px-3 py-1 text-sm">
+              <Activity className="w-4 h-4" />
+              <span className="font-medium">Live Monitor</span>
+            </div>
+            <ArrowRight className="w-4 h-4 text-white/60" />
+            <div className="flex items-center gap-2 text-white/60 text-sm">
+              <Headphones className="w-4 h-4" />
+              <span>Analysis & Coaching</span>
+            </div>
+          </div>
+          <div className="text-xs text-center text-white/70">
+            📶 You are here: Live conversation monitoring stage
+          </div>
+        </div>
+        
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold flex items-center gap-3">
+              <Activity className="h-8 w-8" />
+              Live Monitor
+            </h1>
+            <p className="text-green-100 mt-1">Real-time conversation monitoring and instant insights</p>
+          </div>
+          {onNavigate && (
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => onNavigate('list')}
+                className="bg-blue-600/80 hover:bg-blue-600 px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 text-sm font-medium"
+              >
+                <Phone className="w-4 h-4" />
+                Call Recordings
+              </button>
+              <button
+                onClick={() => onNavigate('transcripts')}
+                className="bg-purple-600/80 hover:bg-purple-600 px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 text-sm font-medium"
+              >
+                <Headphones className="w-4 h-4" />
+                Deep Analysis
+              </button>
+            </div>
+          )}
+        </div>
       </div>
+      
+      {/* Conversations Table */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Activity className="text-green-600" size={24} />
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Active Conversations</h3>
+                <p className="text-sm text-gray-500">Real-time conversation monitoring and analysis</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 px-3 py-1 rounded-full">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              Live Monitoring
+            </div>
+          </div>
+        </div>
       
       <div className="overflow-x-auto">
         <table className="w-full">
@@ -147,6 +215,7 @@ const ConversationList: React.FC<ConversationListProps> = ({ conversations }) =>
             })}
           </tbody>
         </table>
+      </div>
       </div>
     </div>
   );

@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { Transcript } from '../../types';
-import { FileText, Play, Clock, Users, TrendingUp, TrendingDown, Star, MessageCircle, Mic, Eye } from 'lucide-react';
+import { FileText, Play, Clock, Users, TrendingUp, TrendingDown, Star, MessageCircle, Mic, Eye, Phone, Activity, Headphones, ArrowRight } from 'lucide-react';
 import TranscriptViewer from './TranscriptViewer';
 
 interface TranscriptListProps {
   transcripts: Transcript[];
+  onNavigate?: (tab: string) => void;
 }
 
-const TranscriptList: React.FC<TranscriptListProps> = ({ transcripts }) => {
+const TranscriptList: React.FC<TranscriptListProps> = ({ transcripts, onNavigate }) => {
   const [selectedTranscript, setSelectedTranscript] = useState<Transcript | null>(null);
 
   const getProcessingStatusColor = (status: string) => {

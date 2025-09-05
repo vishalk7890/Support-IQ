@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { RefreshCw, Search, Eye, Calendar, Activity, Play, Clock, TrendingUp, User, Phone, BarChart3, MessageCircle, Brain, Send } from 'lucide-react';
+import { RefreshCw, Search, Eye, Calendar, Activity, Play, Clock, TrendingUp, User, Phone, BarChart3, MessageCircle, Brain, Send, ArrowRight, Headphones } from 'lucide-react';
 import { useListService, ListItem } from '../../services/listService';
 import { useAuthenticatedRequest } from '../../hooks/useApiClient';
 
-const ListViewer: React.FC = () => {
+interface ListViewerProps {
+  onNavigate?: (tab: string) => void;
+}
+
+const ListViewer: React.FC<ListViewerProps> = ({ onNavigate }) => {
   const { getList, isReady } = useListService();
   const { makeRequest: makeAuthenticatedRequest } = useAuthenticatedRequest();
   const [listData, setListData] = useState<ListItem[]>([]);
@@ -418,7 +422,30 @@ Encountered an unexpected error: ${err.message.split(':')[0]}
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl shadow-lg text-white p-6">
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-lg text-white p-6">
+        {/* Workflow Progress Bar */}
+        <div className="mb-6">
+          <div className="flex items-center justify-center gap-4 mb-3">
+            <div className="flex items-center gap-2 bg-white/20 rounded-full px-3 py-1 text-sm">
+              <Phone className="w-4 h-4" />
+              <span className="font-medium">Call Recordings</span>
+            </div>
+            <ArrowRight className="w-4 h-4 text-white/60" />
+            <div className="flex items-center gap-2 text-white/60 text-sm">
+              <Activity className="w-4 h-4" />
+              <span>Live Monitor</span>
+            </div>
+            <ArrowRight className="w-4 h-4 text-white/60" />
+            <div className="flex items-center gap-2 text-white/60 text-sm">
+              <Headphones className="w-4 h-4" />
+              <span>Analysis & Coaching</span>
+            </div>
+          </div>
+          <div className="text-xs text-center text-white/70">
+            🎦 You are here: Raw recordings and initial processing stage
+          </div>
+        </div>
+        
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-3">
@@ -427,48 +454,73 @@ Encountered an unexpected error: ${err.message.split(':')[0]}
             </h1>
             <p className="text-blue-100 mt-1">Analyze customer support conversations with AI insights</p>
           </div>
-          <button
-            onClick={fetchData}
-            disabled={loading}
-            className="bg-white/20 hover:bg-white/30 disabled:opacity-50 px-4 py-2 rounded-lg transition-all duration-200 backdrop-blur-sm border border-white/20"
-          >
-            <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-          </button>
+          <div className="flex items-center gap-3">
+            {onNavigate && (
+              <>
+                <button
+                  onClick={() => onNavigate('conversations')}
+                  className="bg-green-600/80 hover:bg-green-600 px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 text-sm font-medium"
+                >
+                  <Activity className="w-4 h-4" />
+                  View Live Monitor
+                </button>
+                <button
+                  onClick={() => onNavigate('transcripts')}
+                  className="bg-purple-600/80 hover:bg-purple-600 px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 text-sm font-medium"
+                >
+                  <Headphones className="w-4 h-4" />
+                  Deep Analysis
+                </button>
+              </>
+            )}
+            <button
+              onClick={fetchData}
+              disabled={loading}
+              className="bg-white/20 hover:bg-white/30 disabled:opacity-50 px-4 py-2 rounded-lg transition-all duration-200 backdrop-blur-sm border border-white/20"
+            >
+              <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-            <div className="flex items-center gap-2 text-white/90 text-sm font-medium">
+            <div className="flex items-center gap-2 text-white text-sm font-medium">
               <Activity className="w-4 h-4" />
               Total Recordings
             </div>
-            <p className="text-2xl font-bold mt-1">{listData.length}</p>
+            <p className="text-2xl font-bold mt-1 text-white">{listData.length}</p>
           </div>
           <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-            <div className="flex items-center gap-2 text-white/90 text-sm font-medium">
+            <div className="flex items-center gap-2 text-white text-sm font-medium">
               <Clock className="w-4 h-4" />
               Total Duration
             </div>
-            <p className="text-2xl font-bold mt-1">
+            <p className="text-2xl font-bold mt-1 text-white">
               {Math.round(listData.reduce((acc, item) => acc + parseFloat(item.duration || '0'), 0) / 60)}m
             </p>
           </div>
           <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-            <div className="flex items-center gap-2 text-white/90 text-sm font-medium">
+            <div className="flex items-center gap-2 text-white text-sm font-medium">
               <TrendingUp className="w-4 h-4" />
               Avg Confidence
             </div>
-            <p className="text-2xl font-bold mt-1">
+            <p className="text-2xl font-bold mt-1 text-white">
               {(listData.reduce((acc, item) => acc + parseFloat(item.confidence || '0'), 0) * 100 / listData.length || 0).toFixed(1)}%
             </p>
           </div>
           <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-            <div className="flex items-center gap-2 text-white/90 text-sm font-medium">
+            <div className="flex items-center gap-2 text-white text-sm font-medium">
               <Eye className="w-4 h-4" />
-              Filtered
+              {searchTerm || sortBy !== 'jobName' ? 'Filtered Results' : 'Available'}
             </div>
-            <p className="text-2xl font-bold mt-1">{filteredAndSortedData.length}</p>
+            <p className="text-2xl font-bold mt-1 text-white">{filteredAndSortedData.length}</p>
+            {(searchTerm || sortBy !== 'jobName') && (
+              <p className="text-xs text-white/70 mt-1">
+                {searchTerm ? `Search: "${searchTerm.slice(0, 20)}${searchTerm.length > 20 ? '...' : ''}"` : `Sorted by ${sortBy}`}
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -480,10 +532,10 @@ Encountered an unexpected error: ${err.message.split(':')[0]}
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
               type="text"
-              placeholder="Search recordings by job name, language, or any field..."
+              placeholder="🔍 Search by job name, language, confidence level, or any field..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white text-gray-900 placeholder-gray-500"
             />
           </div>
           <select
@@ -514,16 +566,16 @@ Encountered an unexpected error: ${err.message.split(':')[0]}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.05 }}
-              className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-200 overflow-hidden group"
+              className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-2xl hover:shadow-blue-100 transition-all duration-300 overflow-hidden group hover:scale-[1.02] hover:border-blue-200 transform"
             >
               {/* Card Header */}
               <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 border-b">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-gray-900 truncate">
+                    <h3 className="font-semibold text-gray-900 truncate text-base">
                       {item.jobName?.replace('.wav', '') || 'Untitled Recording'}
                     </h3>
-                    <p className="text-sm text-gray-600 mt-1">
+                    <p className="text-sm text-gray-700 mt-1 font-medium">
                       {item.lang || 'Unknown Language'}
                     </p>
                   </div>
@@ -541,16 +593,53 @@ Encountered an unexpected error: ${err.message.split(':')[0]}
               <div className="p-4">
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-gray-400" />
+                    <Clock className="w-4 h-4 text-gray-500" />
                     <span className="text-sm font-medium text-gray-900">
                       {formatDuration(item.duration || '0')}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <BarChart3 className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-600">
-                      Analysis Ready
+                    <BarChart3 className="w-4 h-4 text-green-500" />
+                    <span className="text-sm text-green-700 font-medium">
+                      AI Ready
                     </span>
+                  </div>
+                </div>
+
+                {/* Quick Insights Tags */}
+                <div className="mb-4 space-y-2">
+                  <div className="flex flex-wrap gap-1.5">
+                    {/* Confidence insight */}
+                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                      parseFloat(item.confidence || '0') > 0.95 ? 'bg-emerald-100 text-emerald-700' :
+                      parseFloat(item.confidence || '0') > 0.90 ? 'bg-yellow-100 text-yellow-700' :
+                      'bg-orange-100 text-orange-700'
+                    }`}>
+                      🎦 {parseFloat(item.confidence || '0') > 0.95 ? 'High Quality' : parseFloat(item.confidence || '0') > 0.90 ? 'Good Quality' : 'Needs Review'}
+                    </span>
+                    
+                    {/* Duration insight */}
+                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                      parseFloat(item.duration || '0') < 120 ? 'bg-blue-100 text-blue-700' :
+                      parseFloat(item.duration || '0') < 300 ? 'bg-indigo-100 text-indigo-700' :
+                      'bg-purple-100 text-purple-700'
+                    }`}>
+                      ⏱️ {parseFloat(item.duration || '0') < 120 ? 'Quick Call' : parseFloat(item.duration || '0') < 300 ? 'Standard Call' : 'Extended Call'}
+                    </span>
+                    
+                    {/* Language insight */}
+                    {item.lang && (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                        🌍 {item.lang === 'en-US' ? 'English' : item.lang}
+                      </span>
+                    )}
+                  </div>
+                  
+                  {/* AI-generated insight preview */}
+                  <div className="text-xs text-gray-600 italic">
+                    🤖 {parseFloat(item.confidence || '0') > 0.95 ? 'Clear conversation, excellent transcription quality' :
+                        parseFloat(item.confidence || '0') > 0.90 ? 'Good conversation quality, ready for analysis' :
+                        'May need manual review for best results'}
                   </div>
                 </div>
 
@@ -565,13 +654,13 @@ Encountered an unexpected error: ${err.message.split(':')[0]}
                   </div>
                 )}
 
-                {/* Action Button */}
+                {/* Enhanced Action Button */}
                 <button
                   onClick={() => handleViewAnalytics(item)}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center justify-center gap-2 group-hover:shadow-lg"
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 px-4 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 font-medium group-hover:scale-[1.02] hover:scale-[1.02] group-hover:shadow-xl hover:shadow-xl transform"
                 >
-                  <BarChart3 className="w-4 h-4" />
-                  View Analytics
+                  <span className="text-lg">📊</span>
+                  See AI Insights
                 </button>
               </div>
             </motion.div>
