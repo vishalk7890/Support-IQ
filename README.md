@@ -7,7 +7,6 @@ A comprehensive GenAI-powered customer support analytics platform with real-time
 ### Prerequisites
 - Node.js (v18 or higher)
 - npm or yarn
-- Modern web browser
 
 ### Installation & Setup
 
