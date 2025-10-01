@@ -59,7 +59,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
       <div className="flex items-center gap-3 mb-8 p-2">
         <Bot className="text-blue-400" size={32} />
         <div>
-          <h1 className="text-xl font-bold">Support Coach</h1>
+          <h1 className="text-xl font-bold">Support-IQ</h1>
           <p className="text-slate-400 text-sm">AI Analytics Hub</p>
         </div>
       </div>
