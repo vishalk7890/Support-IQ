@@ -60,14 +60,10 @@ const config = {
       loginWith: {
         oauth: {
           domain: 'pca-1755221929659628847.auth.us-east-1.amazoncognito.com',
-          scopes: ['openid', 'email', 'profile', 'phone'],
-         
+          scopes: ['openid'],
           redirectSignIn: [`${appOrigin}/oauth/callback`],
-          redirectSignOut: [appOrigin], // e.g., goes to homepage
-          responseType: 'code' as const,
-          options: {
-            
-          }
+          redirectSignOut: [appOrigin],
+          responseType: 'code' as const
         }
       }
     }

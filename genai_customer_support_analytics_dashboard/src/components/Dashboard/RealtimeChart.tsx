@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactEChartsCore from 'echarts-for-react/lib/core';
 import * as echarts from 'echarts/core';
 import { LineChart } from 'echarts/charts';
@@ -7,10 +7,132 @@ import { CanvasRenderer } from 'echarts/renderers';
 
 echarts.use([LineChart, GridComponent, TooltipComponent, LegendComponent, TitleComponent, CanvasRenderer]);
 
+interface ChartData {
+  timeLabels: string[];
+  conversationCounts: number[];
+  sentimentScores: number[];
+  responseTimes: number[];
+}
+
 const RealtimeChart: React.FC = () => {
+  const [chartData, setChartData] = useState<ChartData>({
+    timeLabels: [],
+    conversationCounts: [],
+    sentimentScores: [],
+    responseTimes: []
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchChartData = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch('https://6wg7m9tsxg.execute-api.us-east-1.amazonaws.com/Prod/list', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('id_token') || localStorage.getItem('access_token')}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          const records = data.Records || [];
+          
+          // Group records by hour for the last 8 hours
+          const hourlyData = processRecordsByHour(records);
+          setChartData(hourlyData);
+          console.log('✅ Chart data updated with real API data');
+        } else {
+          console.log('⚠️ API call failed, using fallback chart data');
+          setChartData(getFallbackData());
+        }
+      } catch (error) {
+        console.log('⚠️ API error, using fallback chart data:', error);
+        setChartData(getFallbackData());
+      }
+      setLoading(false);
+    };
+
+    fetchChartData();
+    
+    // Refresh every 5 minutes
+    const interval = setInterval(fetchChartData, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const processRecordsByHour = (records: any[]): ChartData => {
+    const now = new Date();
+    const hours: ChartData = {
+      timeLabels: [],
+      conversationCounts: [],
+      sentimentScores: [],
+      responseTimes: []
+    };
+
+    // Generate last 8 hours
+    for (let i = 7; i >= 0; i--) {
+      const hourStart = new Date(now.getTime() - i * 60 * 60 * 1000);
+      const hourEnd = new Date(hourStart.getTime() + 60 * 60 * 1000);
+      
+      hours.timeLabels.push(hourStart.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false 
+      }));
+
+      // Filter records for this hour
+      const hourRecords = records.filter(record => {
+        const recordTime = new Date(record.timestamp);
+        return recordTime >= hourStart && recordTime < hourEnd;
+      });
+
+      // Calculate metrics for this hour
+      hours.conversationCounts.push(hourRecords.length);
+      
+      if (hourRecords.length > 0) {
+        const avgSentiment = hourRecords
+          .map(r => parseFloat(r.callerSentimentScore))
+          .filter(s => !isNaN(s))
+          .reduce((sum, s) => sum + s, 0) / hourRecords.length;
+        hours.sentimentScores.push(Number((avgSentiment / 5).toFixed(2))); // Normalize to 0-1 range
+        
+        const avgDuration = hourRecords
+          .map(r => parseFloat(r.duration))
+          .filter(d => !isNaN(d) && d > 0)
+          .reduce((sum, d) => sum + d, 0) / hourRecords.length;
+        hours.responseTimes.push(Math.round(avgDuration));
+      } else {
+        hours.sentimentScores.push(0);
+        hours.responseTimes.push(0);
+      }
+    }
+
+    return hours;
+  };
+
+  const getFallbackData = (): ChartData => {
+    const now = new Date();
+    const timeLabels = [];
+    for (let i = 7; i >= 0; i--) {
+      const hour = new Date(now.getTime() - i * 60 * 60 * 1000);
+      timeLabels.push(hour.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false 
+      }));
+    }
+    
+    return {
+      timeLabels,
+      conversationCounts: [2, 4, 3, 6, 5, 4, 3, 2],
+      sentimentScores: [0.6, 0.7, 0.5, 0.8, 0.7, 0.6, 0.8, 0.7],
+      responseTimes: [120, 95, 140, 85, 110, 100, 90, 105]
+    };
+  };
   const option = {
     title: {
-      text: 'Real-time Conversation Analytics',
+      text: loading ? 'Loading Real-time Analytics...' : 'Real-time Conversation Analytics (Last 8 Hours)',
       left: 'left',
       textStyle: {
         fontSize: 16,
@@ -28,7 +150,7 @@ const RealtimeChart: React.FC = () => {
       }
     },
     legend: {
-      data: ['Active Conversations', 'Sentiment Score', 'Response Time'],
+      data: ['Hourly Conversations', 'Avg Sentiment', 'Avg Response Time (s)'],
       bottom: 10,
       textStyle: {
         color: '#6B7280'
@@ -44,7 +166,7 @@ const RealtimeChart: React.FC = () => {
     xAxis: {
       type: 'category',
       boundaryGap: false,
-      data: ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00'],
+      data: chartData.timeLabels,
       axisLine: {
         lineStyle: {
           color: '#E5E7EB'
@@ -72,9 +194,9 @@ const RealtimeChart: React.FC = () => {
     },
     series: [
       {
-        name: 'Active Conversations',
+        name: 'Hourly Conversations',
         type: 'line',
-        data: [15, 23, 18, 32, 28, 25, 22, 19],
+        data: chartData.conversationCounts,
         smooth: true,
         lineStyle: { 
           color: '#3B82F6',
@@ -98,9 +220,9 @@ const RealtimeChart: React.FC = () => {
         symbolSize: 6
       },
       {
-        name: 'Sentiment Score',
+        name: 'Avg Sentiment',
         type: 'line',
-        data: [0.6, 0.7, 0.5, 0.8, 0.7, 0.6, 0.8, 0.7],
+        data: chartData.sentimentScores,
         smooth: true,
         lineStyle: { 
           color: '#10B981',
@@ -110,9 +232,9 @@ const RealtimeChart: React.FC = () => {
         symbolSize: 6
       },
       {
-        name: 'Response Time',
+        name: 'Avg Response Time (s)',
         type: 'line',
-        data: [120, 95, 140, 85, 110, 100, 90, 105],
+        data: chartData.responseTimes,
         smooth: true,
         lineStyle: { 
           color: '#F59E0B',

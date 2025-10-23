@@ -1,21 +1,23 @@
 import React from 'react';
-import { TrendingUp, TrendingDown, Clock, Users, MessageCircle, Target, AlertTriangle, Award, Star, FileText, Mic } from 'lucide-react';
+import { TrendingUp, TrendingDown, Clock, MessageCircle, Target, AlertTriangle, Star, FileText, Mic } from 'lucide-react';
 import { PerformanceMetrics } from '../../types';
 
 interface MetricsGridProps {
   metrics: PerformanceMetrics;
 }
 
+// Helper function to format time display
+const formatTime = (seconds: number): string => {
+  if (seconds < 60) {
+    return `${seconds}s`;
+  }
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return remainingSeconds > 0 ? `${minutes}m ${remainingSeconds}s` : `${minutes}m`;
+};
+
 const MetricsGrid: React.FC<MetricsGridProps> = ({ metrics }) => {
   const metricCards = [
-    {
-      title: 'Active Agents',
-      value: metrics.activeAgents,
-      icon: Users,
-      color: 'bg-blue-500',
-      change: '+12%',
-      positive: true
-    },
     {
       title: 'Total Conversations',
       value: metrics.totalConversations,
@@ -75,18 +77,10 @@ const MetricsGrid: React.FC<MetricsGridProps> = ({ metrics }) => {
     },
     {
       title: 'Avg Response Time',
-      value: `${metrics.avgResponseTime}s`,
+      value: formatTime(metrics.avgResponseTime),
       icon: Clock,
       color: 'bg-cyan-500',
       change: '-15s',
-      positive: true
-    },
-    {
-      title: 'Upsell Opportunities',
-      value: metrics.upsellConversions,
-      icon: Award,
-      color: 'bg-pink-500',
-      change: '+24%',
       positive: true
     },
     {
@@ -95,14 +89,6 @@ const MetricsGrid: React.FC<MetricsGridProps> = ({ metrics }) => {
       icon: AlertTriangle,
       color: 'bg-rose-500',
       change: '-1.8%',
-      positive: true
-    },
-    {
-      title: 'Coaching Insights',
-      value: metrics.coachingInsights,
-      icon: TrendingUp,
-      color: 'bg-violet-500',
-      change: '+6',
       positive: true
     }
   ];
