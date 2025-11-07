@@ -1,0 +1,18 @@
+{
+  "ConversationAnalytics": {
+    "Agent": "TestAgent",
+    "Duration": 180,
+    "ConversationTime": "2025-10-31T12:00:00",
+    "SentimentTrends": {
+      "spk_0": {"SentimentScore": -3.5},
+      "spk_1": {"SentimentScore": 2.1}
+    },
+    "SpeakerTime": {
+      "spk_0": {"TotalTimeSecs": 45},
+      "spk_1": {"TotalTimeSecs": 120}
+    }
+  },
+  "SpeechSegments": [
+    {"SegmentSpeaker": "spk_0", "SegmentStartTime": 0, "SegmentEndTime": 5}
+  ]
+}

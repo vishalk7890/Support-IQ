@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { X, Clock, Mic, Loader2 } from 'lucide-react';
+import { X, Clock, Mic, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import useRecordingsService, { ParsedFile, TranscriptSegment } from '../../services/recordingsService';
 
 interface Props {
@@ -14,15 +14,33 @@ const formatTime = (s: number) => {
 };
 
 const TranscriptModal: React.FC<Props> = ({ fileKey, onClose }) => {
-  const { getParsedFile, normalizeResponse, loading, error } = useRecordingsService();
+  const { getParsedFile, normalizeResponse, loading, error, isReady } = useRecordingsService();
   const [data, setData] = useState<ParsedFile | null>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
+
+  const loadData = async () => {
+    setLocalError(null);
+    try {
+      console.log('📥 Loading transcript data for:', fileKey);
+      const raw = await getParsedFile(fileKey);
+      if (raw) {
+        const normalized = normalizeResponse(raw);
+        setData(normalized);
+        console.log('✅ Transcript data loaded successfully');
+      } else {
+        setLocalError('No data received from server');
+      }
+    } catch (err) {
+      console.error('❌ Error loading transcript:', err);
+      setLocalError(err instanceof Error ? err.message : 'Failed to load transcript');
+    }
+  };
 
   useEffect(() => {
-    (async () => {
-      const raw = await getParsedFile(fileKey);
-      if (raw) setData(normalizeResponse(raw));
-    })();
-  }, [fileKey, getParsedFile, normalizeResponse]);
+    if (fileKey && isReady) {
+      loadData();
+    }
+  }, [fileKey, isReady]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
@@ -38,13 +56,25 @@ const TranscriptModal: React.FC<Props> = ({ fileKey, onClose }) => {
         </div>
 
         {loading && (
-          <div className="p-10 flex items-center justify-center text-gray-600">
-            <Loader2 className="animate-spin mr-2" /> Loading…
+          <div className="p-10 flex flex-col items-center justify-center gap-3">
+            <Loader2 className="animate-spin text-blue-600" size={40} />
+            <p className="text-gray-600">Loading transcript...</p>
           </div>
         )}
 
-        {error && !loading && (
-          <div className="p-6 text-sm text-red-600">{error}</div>
+        {(error || localError) && !loading && (
+          <div className="p-10 flex flex-col items-center justify-center gap-4">
+            <AlertCircle className="text-red-600" size={40} />
+            <p className="text-red-600 font-semibold">Failed to load transcript</p>
+            <p className="text-gray-600 text-sm">{error || localError}</p>
+            <button
+              onClick={loadData}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <RefreshCw size={16} />
+              Retry
+            </button>
+          </div>
         )}
 
         {!loading && data && (
@@ -65,19 +95,31 @@ const TranscriptModal: React.FC<Props> = ({ fileKey, onClose }) => {
                 <h4 className="text-md font-semibold mb-2">Transcript</h4>
                 <div className="max-h-96 overflow-y-auto space-y-3">
                   {data.segments?.length ? (
-                    data.segments.map((seg: TranscriptSegment) => (
-                      <div key={seg.id} className="p-3 border rounded-md">
-                        <div className="flex items-center justify-between mb-1">
-                          <div className="text-xs font-medium uppercase text-blue-600">{seg.speaker}</div>
-                          <div className="text-xs text-gray-500">
-                            {formatTime(seg.startTime)} - {formatTime(seg.endTime)}
+                    data.segments.map((seg: TranscriptSegment, idx: number) => {
+                      const speakerColor = seg.speaker.toLowerCase().includes('agent') ? 'text-blue-600' : 'text-green-600';
+                      const bgColor = seg.speaker.toLowerCase().includes('agent') ? 'bg-blue-50' : 'bg-green-50';
+                      
+                      return (
+                        <div key={seg.id || idx} className={`p-3 border rounded-md ${bgColor}`}>
+                          <div className="flex items-center justify-between mb-1">
+                            <div className={`text-xs font-medium uppercase ${speakerColor}`}>{seg.speaker}</div>
+                            <div className="text-xs text-gray-500">
+                              {formatTime(seg.startTime)} - {formatTime(seg.endTime)}
+                            </div>
                           </div>
+                          <div className="text-sm text-gray-800">{seg.text}</div>
+                          {seg.confidence && (
+                            <div className="text-xs text-gray-500 mt-1">
+                              Confidence: {Math.round(seg.confidence * 100)}%
+                            </div>
+                          )}
                         </div>
-                        <div className="text-sm text-gray-800">{seg.text}</div>
-                      </div>
-                    ))
+                      );
+                    })
                   ) : (
-                    <div className="text-sm text-gray-500">No transcript segments found.</div>
+                    <div className="p-6 text-center">
+                      <p className="text-sm text-gray-500">No transcript segments found.</p>
+                    </div>
                   )}
                 </div>
               </div>

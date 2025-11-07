@@ -20,7 +20,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     if (pathname === '/conversations') return 'conversations';
     if (pathname === '/transcripts') return 'transcripts';
     if (pathname === '/analysis-coaching') return 'analysis-coaching';
-    if (pathname === '/agents') return 'agents';
+    // if (pathname === '/agents') return 'agents';
     if (pathname === '/compliance') return 'compliance';
     if (pathname === '/users') return 'users';
     return 'dashboard';
@@ -36,7 +36,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       conversations: '/conversations',
       transcripts: '/transcripts',
       'analysis-coaching': '/analysis-coaching',
-      agents: '/agents',
+      // agents: '/agents',
       compliance: '/compliance',
       users: '/users'
     };

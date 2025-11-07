@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Brain,
@@ -30,22 +30,28 @@ import {
   Settings
 } from 'lucide-react';
 import { useCoachingService, CoachingAnalytics, ActionPlan, SmartCoachingInsight } from '../../services/coachingService';
+import { useTranscriptService } from '../../services/transcriptService';
+import { useAnalyticsData } from '../../hooks/useAnalyticsData';
 
 interface EnhancedCoachingDashboardProps {
   onNavigate?: (tab: string) => void;
 }
 
 const EnhancedCoachingDashboard: React.FC<EnhancedCoachingDashboardProps> = ({ onNavigate }) => {
-  const { getCoachingAnalytics } = useCoachingService();
+  const { calculateAnalyticsFromTranscripts } = useCoachingService();
+  const { fetchAllTranscripts } = useTranscriptService();
+  const { agents, conversations } = useAnalyticsData();
   
   const [analytics, setAnalytics] = useState<CoachingAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'insights' | 'action-plans' | 'agents'>('overview');
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<'1w' | '1m' | '3m' | '6m'>('1m');
+  const [smartInsights, setSmartInsights] = useState<SmartCoachingInsight[]>([]);
 
-  // Mock data for enhanced features
-  const [smartInsights] = useState<SmartCoachingInsight[]>([
+  // Fallback mock data if no insights from API
+  const mockInsights = React.useMemo<SmartCoachingInsight[]>(() => [
     {
       id: '1',
       agentId: 'agent_001',
@@ -101,7 +107,7 @@ const EnhancedCoachingDashboard: React.FC<EnhancedCoachingDashboardProps> = ({ o
         severity: 0
       }
     }
-  ]);
+  ], []);
 
   const [actionPlans] = useState<ActionPlan[]>([
     {
@@ -136,21 +142,56 @@ const EnhancedCoachingDashboard: React.FC<EnhancedCoachingDashboardProps> = ({ o
     }
   ]);
 
-  useEffect(() => {
-    const fetchAnalytics = async () => {
-      try {
-        setLoading(true);
-        const data = await getCoachingAnalytics();
-        setAnalytics(data);
-      } catch (error) {
-        console.error('Error fetching coaching analytics:', error);
-      } finally {
-        setLoading(false);
+  const fetchAnalytics = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      console.log('🔄 Fetching coaching analytics from API...');
+      
+      // Fetch real data from Lambda/DynamoDB
+      const coachingService = new (await import('../../services/coachingService')).default();
+      const analyticsData = await coachingService.getCoachingAnalytics();
+      
+      setAnalytics(analyticsData);
+      
+      // Update smart insights from API
+      if ((analyticsData as any).insights && Array.isArray((analyticsData as any).insights)) {
+        const apiInsights = (analyticsData as any).insights.map((insight: any) => ({
+          ...insight,
+          aiConfidence: insight.aiConfidence || 0.85,
+          impactLevel: insight.impactLevel || 'medium',
+          suggestedActions: insight.suggestedActions || [],
+          relatedInsights: insight.relatedInsights || [],
+          estimatedImprovementTime: insight.estimatedImprovementTime || '2-3 weeks',
+          transcriptEvidence: insight.transcriptEvidence || {
+            segmentId: 'seg_001',
+            text: insight.message || 'Evidence from transcript',
+            timestamp: 120,
+            context: 'Call context',
+            severity: 5
+          }
+        }));
+        setSmartInsights(apiInsights);
+        console.log(`✅ Loaded ${apiInsights.length} smart insights from API`);
+      } else {
+        // Use mock data if no insights from API
+        setSmartInsights(mockInsights);
+        console.log('⚠️ No insights from API, using mock data');
       }
-    };
+      
+      console.log('✅ Coaching analytics loaded from API');
+    } catch (error) {
+      console.error('❌ Error fetching coaching analytics:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load coaching analytics');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
+  useEffect(() => {
+    // Fetch data on mount and when timeRange changes
     fetchAnalytics();
-  }, [timeRange]);
+  }, [timeRange, fetchAnalytics]); // Re-run when timeRange changes
 
   const renderOverviewTab = () => (
     <div className="space-y-6">
@@ -370,7 +411,14 @@ const EnhancedCoachingDashboard: React.FC<EnhancedCoachingDashboardProps> = ({ o
       </div>
 
       <div className="grid gap-4">
-        {smartInsights.map((insight, index) => (
+        {smartInsights.length === 0 ? (
+          <div className="bg-white rounded-xl p-8 text-center border border-gray-200">
+            <Brain className="w-12 h-12 mx-auto text-gray-300 mb-3" />
+            <p className="text-gray-600">No coaching insights available yet.</p>
+            <p className="text-sm text-gray-400 mt-1">Insights will appear here after processing call transcripts.</p>
+          </div>
+        ) : (
+          smartInsights.map((insight, index) => (
           <motion.div
             key={insight.id}
             initial={{ opacity: 0, y: 20 }}
@@ -458,7 +506,8 @@ const EnhancedCoachingDashboard: React.FC<EnhancedCoachingDashboardProps> = ({ o
               )}
             </div>
           </motion.div>
-        ))}
+        ))
+        )}
       </div>
     </div>
   );
@@ -600,6 +649,15 @@ const EnhancedCoachingDashboard: React.FC<EnhancedCoachingDashboardProps> = ({ o
               ))}
             </div>
             
+            <button 
+              onClick={fetchAnalytics}
+              disabled={loading}
+              className="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 text-sm font-medium disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+            
             <button className="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 text-sm font-medium">
               <Download className="w-4 h-4" />
               Export Report
@@ -629,16 +687,33 @@ const EnhancedCoachingDashboard: React.FC<EnhancedCoachingDashboardProps> = ({ o
         </div>
       </div>
 
+      {/* Error State */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+          <AlertTriangle className="w-12 h-12 mx-auto text-red-600 mb-3" />
+          <h3 className="text-lg font-semibold text-red-900 mb-2">Unable to Load Analytics</h3>
+          <p className="text-red-600 mb-4">{error}</p>
+          <button
+            onClick={fetchAnalytics}
+            className="flex items-center gap-2 mx-auto px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            <RefreshCw size={16} />
+            Try Again
+          </button>
+        </div>
+      )}
+
       {/* Tab Content */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          transition={{ duration: 0.2 }}
-        >
-          {activeTab === 'overview' && renderOverviewTab()}
+      {!error && (
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.2 }}
+          >
+            {activeTab === 'overview' && renderOverviewTab()}
           {activeTab === 'insights' && renderInsightsTab()}
           {activeTab === 'action-plans' && renderActionPlansTab()}
           {activeTab === 'agents' && (
@@ -648,8 +723,9 @@ const EnhancedCoachingDashboard: React.FC<EnhancedCoachingDashboardProps> = ({ o
               <p className="text-gray-600">Individual agent performance analytics and coaching recommendations will be available here.</p>
             </div>
           )}
-        </motion.div>
-      </AnimatePresence>
+          </motion.div>
+        </AnimatePresence>
+      )}
     </div>
   );
 };

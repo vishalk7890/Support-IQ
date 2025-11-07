@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { faker } from '@faker-js/faker';
 import { Agent, Conversation, CoachingInsight, PerformanceMetrics, Transcript, TranscriptSegment, SentimentAnalysis } from '../types';
-import { useListService } from '../services/listService';
+import { useAuthenticatedRequest } from './useApiClient';
 
 // Mock data generators for demonstration
 const generateTranscriptSegments = (count: number): TranscriptSegment[] => {
@@ -182,6 +182,7 @@ const generateCoachingInsights = (count: number): CoachingInsight[] => {
 
 
 export const useAnalyticsData = () => {
+  const { makeRequest } = useAuthenticatedRequest();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [coachingInsights, setCoachingInsights] = useState<CoachingInsight[]>([]);
@@ -224,19 +225,13 @@ export const useAnalyticsData = () => {
       let realEscalationRate = (mockConversations.filter(conv => conv.status === 'escalated').length / mockConversations.length * 100);
       
       try {
-        const response = await fetch('https://6wg7m9tsxg.execute-api.us-east-1.amazonaws.com/Prod/list', {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('id_token') || localStorage.getItem('access_token')}`,
-            'Content-Type': 'application/json'
-          }
+        const data = await makeRequest<{ Records?: any[] }>('/list', {
+          method: 'GET'
         });
         
-        if (response.ok) {
-          const data = await response.json();
-          const records = data.Records || [];
-          
-          if (records.length > 0) {
+        const records = data.Records || [];
+        
+        if (records.length > 0) {
             totalRecordingCount = records.length;
             console.log('✅ Using real recording count:', records.length);
             
@@ -344,11 +339,8 @@ export const useAnalyticsData = () => {
               console.log('✅ Calculated real interruption count (complexity-based):', realAvgInterruptionCount.toFixed(1));
             }
           }
-        } else {
-          console.log('⚠️ API call failed, using mock data');
-        }
       } catch (error) {
-        console.log('⚠️ API error, using mock data:', error.message);
+        console.log('⚠️ API error, using mock data:', error);
       }
       
       // Set final metrics

@@ -4,7 +4,7 @@ import SimpleLogin from './components/Auth/SimpleLogin';
 import { OAuthCallback } from './components/OAuthCallback';
 import Dashboard from './components/Dashboard/Dashboard';
 import AnalyticsPage from './components/Analytics/AnalyticsPage';
-import AgentOverview from './components/Dashboard/AgentOverview';
+// import AgentOverview from './components/Dashboard/AgentOverview';
 import ResponsibleAI from './components/Compliance/ResponsibleAI';
 import UsersPage from './components/Users/UsersPage';
 import {
@@ -54,7 +54,7 @@ function App() {
                 <Route path="/conversations" element={<ConversationListWrapper conversations={conversations} />} />
                 <Route path="/transcripts" element={<TranscriptListWrapper transcripts={transcripts} />} />
                 <Route path="/analysis-coaching" element={<AnalysisCoachingPageWrapper />} />
-                <Route path="/agents" element={<AgentOverview agents={agents} />} />
+                {/* <Route path="/agents" element={<AgentOverview agents={agents} />} /> */}
                 <Route path="/compliance" element={<ResponsibleAI />} />
                 <Route path="/users" element={<UsersPage />} />
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />

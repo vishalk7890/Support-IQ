@@ -1,15 +1,63 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Transcript } from '../../types';
-import { ArrowLeft, Play, Pause, Clock, Users, TrendingUp, TrendingDown, Star, Brain, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Play, Pause, Clock, Users, TrendingUp, TrendingDown, Star, Brain, MessageCircle, Loader2, RefreshCw } from 'lucide-react';
+import { useTranscriptService } from '../../services/transcriptService';
 
 interface TranscriptViewerProps {
   transcript: Transcript;
   onBack: () => void;
 }
 
-const TranscriptViewer: React.FC<TranscriptViewerProps> = ({ transcript, onBack }) => {
+const TranscriptViewer: React.FC<TranscriptViewerProps> = ({ transcript: initialTranscript, onBack }) => {
+  const [transcript, setTranscript] = useState<Transcript>(initialTranscript);
   const [currentTime, setCurrentTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const { refreshTranscript } = useTranscriptService();
+
+  // Update transcript when initial transcript changes
+  useEffect(() => {
+    setTranscript(initialTranscript);
+  }, [initialTranscript]);
+
+  // Handle audio playback
+  useEffect(() => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.play().catch(err => {
+          console.error('Audio playback failed:', err);
+          setIsPlaying(false);
+        });
+      } else {
+        audioRef.current.pause();
+      }
+    }
+  }, [isPlaying]);
+
+  // Update current time
+  useEffect(() => {
+    if (audioRef.current) {
+      const audio = audioRef.current;
+      const updateTime = () => setCurrentTime(Math.floor(audio.currentTime));
+      audio.addEventListener('timeupdate', updateTime);
+      audio.addEventListener('ended', () => setIsPlaying(false));
+      
+      return () => {
+        audio.removeEventListener('timeupdate', updateTime);
+        audio.removeEventListener('ended', () => setIsPlaying(false));
+      };
+    }
+  }, []);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    const updated = await refreshTranscript(transcript.id);
+    if (updated) {
+      setTranscript(updated);
+    }
+    setIsRefreshing(false);
+  };
 
   const getSentimentIcon = (sentiment: string) => {
     switch (sentiment) {
@@ -59,24 +107,53 @@ const TranscriptViewer: React.FC<TranscriptViewerProps> = ({ transcript, onBack 
             <h3 className="text-lg font-semibold text-gray-900">Conversation Transcript</h3>
             <p className="text-sm text-gray-500">ID: {transcript.id}</p>
           </div>
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
+            Refresh
+          </button>
         </div>
 
         {/* Audio Controls */}
         {transcript.audioUrl && (
-          <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-            <button
-              onClick={() => setIsPlaying(!isPlaying)}
-              className="flex items-center justify-center w-10 h-10 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors"
-            >
-              {isPlaying ? <Pause size={16} /> : <Play size={16} />}
-            </button>
-            <div className="flex-1">
-              <div className="w-full bg-gray-300 rounded-full h-2">
-                <div className="bg-blue-600 h-2 rounded-full" style={{ width: '30%' }}></div>
-              </div>
-              <div className="flex justify-between text-sm text-gray-600 mt-1">
-                <span>{formatTime(currentTime)}</span>
-                <span>{formatTime(transcript.segments[transcript.segments.length - 1]?.endTime || 0)}</span>
+          <div className="space-y-3">
+            <audio 
+              ref={audioRef}
+              src={transcript.audioUrl}
+              onTimeUpdate={(e) => setCurrentTime(Math.floor((e.target as HTMLAudioElement).currentTime))}
+              onEnded={() => setIsPlaying(false)}
+              className="hidden"
+            />
+            <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+              <button
+                onClick={() => setIsPlaying(!isPlaying)}
+                className="flex items-center justify-center w-10 h-10 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors"
+              >
+                {isPlaying ? <Pause size={16} /> : <Play size={16} />}
+              </button>
+              <div className="flex-1">
+                <div className="w-full bg-gray-300 rounded-full h-2 cursor-pointer" onClick={(e) => {
+                  if (audioRef.current) {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const percent = (e.clientX - rect.left) / rect.width;
+                    const duration = transcript.segments[transcript.segments.length - 1]?.endTime || 0;
+                    audioRef.current.currentTime = percent * duration;
+                  }
+                }}>
+                  <div 
+                    className="bg-blue-600 h-2 rounded-full" 
+                    style={{ 
+                      width: `${(currentTime / (transcript.segments[transcript.segments.length - 1]?.endTime || 1)) * 100}%` 
+                    }}
+                  ></div>
+                </div>
+                <div className="flex justify-between text-sm text-gray-600 mt-1">
+                  <span>{formatTime(currentTime)}</span>
+                  <span>{formatTime(transcript.segments[transcript.segments.length - 1]?.endTime || 0)}</span>
+                </div>
               </div>
             </div>
           </div>

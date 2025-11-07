@@ -19,7 +19,7 @@ export const ListViewerWrapper: React.FC = () => {
       conversations: '/conversations',
       transcripts: '/transcripts',
       'analysis-coaching': '/analysis-coaching',
-      agents: '/agents',
+      // agents: '/agents',
       compliance: '/compliance',
       users: '/users'
     };
@@ -44,7 +44,7 @@ export const ConversationListWrapper: React.FC<{ conversations: any[] }> = ({ co
       conversations: '/conversations',
       transcripts: '/transcripts',
       'analysis-coaching': '/analysis-coaching',
-      agents: '/agents',
+      // agents: '/agents',
       compliance: '/compliance',
       users: '/users'
     };
@@ -69,7 +69,7 @@ export const TranscriptListWrapper: React.FC<{ transcripts: any[] }> = ({ transc
       conversations: '/conversations',
       transcripts: '/transcripts',
       'analysis-coaching': '/analysis-coaching',
-      agents: '/agents',
+      // agents: '/agents',
       compliance: '/compliance',
       users: '/users'
     };
@@ -94,7 +94,7 @@ export const AnalysisCoachingPageWrapper: React.FC = () => {
       conversations: '/conversations',
       transcripts: '/transcripts',
       'analysis-coaching': '/analysis-coaching',
-      agents: '/agents',
+      // agents: '/agents',
       compliance: '/compliance',
       users: '/users'
     };
@@ -119,7 +119,7 @@ export const EnhancedCoachingDashboardWrapper: React.FC = () => {
       conversations: '/conversations',
       transcripts: '/transcripts',
       'analysis-coaching': '/analysis-coaching',
-      agents: '/agents',
+      // agents: '/agents',
       compliance: '/compliance',
       users: '/users'
     };

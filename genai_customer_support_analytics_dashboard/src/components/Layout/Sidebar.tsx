@@ -36,7 +36,7 @@ const workflowSections = [
     items: [
       { id: 'dashboard', label: 'Dashboard', icon: BarChart3, color: 'text-gray-300' },
       { id: 'analytics', label: 'Analytics', icon: TrendingUp, color: 'text-gray-300' },
-      { id: 'agents', label: 'Agents', icon: Users, color: 'text-gray-300' },
+      // { id: 'agents', label: 'Agents', icon: Users, color: 'text-gray-300' },
       { id: 'coaching', label: 'AI Coaching', icon: Brain, color: 'text-gray-300' },
     ]
   },
